@@ -339,7 +339,9 @@ namespace ts.server {
 
         getScriptInfoForNormalizedPath(fileName: NormalizedPath) {
             const scriptInfo = this.projectService.getOrCreateScriptInfoForNormalizedPath(fileName, /*openedByClient*/ false);
-            Debug.assert(!scriptInfo || scriptInfo.isAttached(this));
+            if (scriptInfo && !scriptInfo.isAttached(this)) {
+                return Errors.ThrowProjectDoesNotContainDocument(fileName, this);
+            }
             return scriptInfo;
         }
 

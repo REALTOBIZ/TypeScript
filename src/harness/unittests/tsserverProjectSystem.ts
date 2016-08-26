@@ -2277,4 +2277,38 @@ namespace ts {
             }
         });
     });
+
+    describe("Proper errors", () => {
+        it("document is not contained in project", () => {
+            const file1 = {
+                path: "/a/b/app.ts",
+                content: ""
+            };
+            const corruptedConfig = {
+                path: "/a/b/tsconfig.json",
+                content: "{"
+            };
+            const host = createServerHost([file1, corruptedConfig]);
+            const projectService = createProjectService(host);
+
+            projectService.openClientFile(file1.path);
+            projectService.checkNumberOfProjects({ inferredProjects: 1, configuredProjects: 1 });
+
+            const project = projectService.findProject(corruptedConfig.path);
+            let expectedMessage: string;
+            try {
+                server.Errors.ThrowProjectDoesNotContainDocument(file1.path, project);
+                assert(false, "should not get there");
+            }
+            catch (e) {
+                expectedMessage = (<Error>e).message;
+            }
+            try {
+                project.getScriptInfo(file1.path);
+            }
+            catch (e) {
+                assert.equal((<Error>e).message, expectedMessage, "Unexpected error");
+            }
+        });
+    });
 }
